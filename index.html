@@ -67,6 +67,17 @@
             text-decoration: underline;
         }
 
+        .cursor-dot {
+            position: fixed;
+            left: 0;
+            top: 0;
+            pointer-events: none;
+            border-radius: 50%;
+            z-index: 9999;
+            background: radial-gradient(circle, #ffd700 0%, #ff8c00 100%);
+            box-shadow: 0 0 10px #ffd700, 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
         @media (max-width: 600px) {
             h1 {
                 font-size: 1.5rem;
@@ -87,5 +98,89 @@
     </div>
 
     <p class="footer">The most epic repository on the internet</p>
+
+    <script>
+        (function() {
+            const NUM_DOTS = 12;
+            const dots = [];
+            let initialized = false;
+
+            // Create dots
+            for (let i = 0; i < NUM_DOTS; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'cursor-dot';
+                const size = Math.max(4, 16 - i * 1.2);
+                dot.style.width = size + 'px';
+                dot.style.height = size + 'px';
+                dot.style.opacity = 1 - (i * 0.07);
+                document.body.appendChild(dot);
+
+                dots.push({
+                    el: dot,
+                    size: size,
+                    x: 0,
+                    y: 0,
+                    vx: 0,
+                    vy: 0
+                });
+            }
+
+            let mouseX = 0;
+            let mouseY = 0;
+
+            document.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+
+                // Initialize all dots to cursor position on first move
+                if (!initialized) {
+                    initialized = true;
+                    dots.forEach(dot => {
+                        dot.x = mouseX;
+                        dot.y = mouseY;
+                    });
+                }
+            });
+
+            function animate() {
+                let targetX = mouseX;
+                let targetY = mouseY;
+
+                dots.forEach((dot, index) => {
+                    // Spring physics - each dot follows the previous one
+                    const spring = 0.15 - (index * 0.008);
+                    const friction = 0.75;
+
+                    // Calculate spring force
+                    const dx = targetX - dot.x;
+                    const dy = targetY - dot.y;
+
+                    // Apply spring acceleration
+                    dot.vx += dx * spring;
+                    dot.vy += dy * spring;
+
+                    // Apply friction
+                    dot.vx *= friction;
+                    dot.vy *= friction;
+
+                    // Update position
+                    dot.x += dot.vx;
+                    dot.y += dot.vy;
+
+                    // Position the element (center it on the position)
+                    const offset = dot.size / 2;
+                    dot.el.style.transform = `translate(${dot.x - offset}px, ${dot.y - offset}px)`;
+
+                    // Next dot follows this dot
+                    targetX = dot.x;
+                    targetY = dot.y;
+                });
+
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        })();
+    </script>
 </body>
 </html>
